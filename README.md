@@ -1,6 +1,7 @@
-# FIE Lonet Switch
+# FIE LoNet Switch
 
-FIE Lonet Switch is a command-line tool for managing and switching between different configurations or environments. It is designed to be simple, fast, and easy to use.
+FIE LoNet Switch is a command-line tool for managing and switching between different configurations or environments. It is designed to be simple, fast, and easy to use.  It's user oriented and
+for use by a user operator of a computer system.  Often a mobile workstation or laptop.
 
 ## Features
 - Switch between different environments or configurations
@@ -10,12 +11,15 @@ FIE Lonet Switch is a command-line tool for managing and switching between diffe
 ## Installation
 
 1. Clone the repository:
-   ```sh
-git clone <repository-url>
+
+```sh
+git clone https://github.com/leith-bartrich/fie_lonet_switch.git
 cd fie_lonet_switch
 ```
+
 2. Install the package globally (recommended for CLI usage):
-   ```sh
+
+```sh
 pip install .
 ```
 
@@ -83,6 +87,44 @@ fie_lonet_switch --help
   fie_lonet_switch clear_group mygroup
   ```
 
+## Switch Scripts
+
+You can create switch scripts to automatic switcing of things based when you switch state.
+
+Putting a file that matched "switch_*.py" in your ~/.fie_lonet_switch directory will cause it to be run when you switch state is how you do this.
+
+The script will be imported as a module and the function "switch_change" will be called with the signature:
+
+```python
+def switch_change(switch_to:str, group:str = "*", locale:str = "") -> None:
+    """
+    Called when the switch is changed.
+    :param switch_to: The new switch state. Either "local" or "network".
+    :param group: An optional named of the group of things that should be switched. Defaults to "*", which means 'all groups'.
+    :param locale: An optional name of the locale to switch to. Defaults to empty string "" which means 'all locales' or 'no specific locale'.
+    """
+    pass
+```
+
+In this manner you can generally do whatever you want when the switch state changes.
+
+## Current Status
+
+The database and CLI work well enough to be useful.  The GUI is a work in progress.  The MacOS implementation is simple and seems functional.  But deployment via py2app is not really tested.  It might work?  If it does, it'll put a app bundle in the build subdirectory.  Which you can then drag to your applications folder.
+
+```sh
+python setup.py py2app
+```
+
+A windows and linux tray app should be simple to implement but I've not gotten around to it.
+
+The design makes mention of a user daemon.  It's not implemented yet.  But it will eventually be because it's something I'd eventually use.
+
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+If you would like to contribute to this project, please fork the repository and submit a pull request. All contributions are welcome!
