@@ -167,6 +167,11 @@ def switch_change_transaction(db: SwitchStateDB, switch_to:Literal['lo', 'net'],
     """
     change = SwitchStateChange(mode=switch_to, group=group, locale=locale)
     db.begin()
+
+    if group == "*":
+        # a * change overrides all things.
+        db.clear_switch_state_changes()
+
     change = SwitchStateChange(
         id=uuid.uuid4(),
         c_time=datetime.now(),

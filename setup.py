@@ -10,7 +10,7 @@ OPTIONS = {
         'CFBundleName': 'FIE Lonet Switch',
         'CFBundleShortVersionString': '0.1.0',
         'CFBundleVersion': '0.1.0',
-        'CFBundleIdentifier': 'com.yourdomain.fielonetswitch',
+        'CFBundleIdentifier': 'us.fie.fielonetswitch',
         'LSBackgroundOnly': True,  # Hide dock icon and terminal window
     },
 }

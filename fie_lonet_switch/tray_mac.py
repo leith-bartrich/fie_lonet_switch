@@ -7,30 +7,21 @@ from fie_lonet_switch.database import SwitchStateDB, get_switch_state_transactio
 class FIELonetSwitchApp(rumps.App):
     def __init__(self):
         super().__init__("FIE Lonet Switch", icon=None, menu=[
-            "Switch to Local (lo)",
-            "Switch to Network (net)",
+            "Switch * to Local (lo)",
+            "Switch * to Network (net)",
+            "Switch Group to Local (lo)",
+            "Switch Group to Network (net)",
             None,
-            "Show Status",
             "List All Groups",
             None,
             "Compact Database",
             "Clear Group"
         ])
-        self.title = "FIE"
+        self.title = "L/N"
         self.update_tooltip()
 
     def update_tooltip(self):
-        self.tooltip = self.get_status_str()
-
-    def get_status_str(self, group='*'):
-        db = SwitchStateDB()
-        try:
-            state, locale = get_switch_state_transaction(db, group)
-            return f"Current state for group '{group}': {state} (locale: {locale})"
-        except Exception as e:
-            return f"Error: {e}"
-        finally:
-            db.close()
+        self.tooltip = self.list_all_groups()
 
     def list_all_groups(self):
         db = SwitchStateDB()
@@ -48,10 +39,22 @@ class FIELonetSwitchApp(rumps.App):
         finally:
             db.close()
 
-    @rumps.clicked("Switch to Local (lo)")
+    @rumps.clicked("Switch * to Local (lo)")
+    def switch_all_lo(self, _):
+        do_switch('lo', '*', '')
+        self.update_tooltip()
+        rumps.notification("FIE Lonet Switch", "Switched", "Switched all groups to local (no locale)")
+
+    @rumps.clicked("Switch * to Network (net)")
+    def switch_all_net(self, _):
+        do_switch('net', '*', '')
+        self.update_tooltip()
+        rumps.notification("FIE Lonet Switch", "Switched", "Switched all groups to network (no locale)")
+
+    @rumps.clicked("Switch Group to Local (lo)")
     def switch_lo(self, _):
-        group = rumps.Window("Enter group name (or leave blank for all groups):", "Switch to Local (lo)").run().text
-        locale = rumps.Window("Enter locale (or leave blank for all locales):", "Switch to Local (lo)").run().text
+        group = rumps.Window("Enter group name (or leave blank for all groups):", "Switch Group to Local (lo)").run().text
+        locale = rumps.Window("Enter locale (or leave blank for all locales):", "Switch Group to Local (lo)").run().text
         if not group:
             group = "*"
         if not locale:
@@ -60,10 +63,10 @@ class FIELonetSwitchApp(rumps.App):
         self.update_tooltip()
         rumps.notification("FIE Lonet Switch", "Switched", f"Switched to local (group: {group}, locale: {locale})")
 
-    @rumps.clicked("Switch to Network (net)")
+    @rumps.clicked("Switch Group to Network (net)")
     def switch_net(self, _):
-        group = rumps.Window("Enter group name (or leave blank for all groups):", "Switch to Network (net)").run().text
-        locale = rumps.Window("Enter locale (or leave blank for all locales):", "Switch to Network (net)").run().text
+        group = rumps.Window("Enter group name (or leave blank for all groups):", "Switch Group to Network (net)").run().text
+        locale = rumps.Window("Enter locale (or leave blank for all locales):", "Switch Group to Network (net)").run().text
         if not group:
             group = "*"
         if not locale:
@@ -71,10 +74,6 @@ class FIELonetSwitchApp(rumps.App):
         do_switch('net', group, locale)
         self.update_tooltip()
         rumps.notification("FIE Lonet Switch", "Switched", f"Switched to network (group: {group}, locale: {locale})")
-
-    @rumps.clicked("Show Status")
-    def show_status(self, _):
-        rumps.alert(self.get_status_str())
 
     @rumps.clicked("List All Groups")
     def show_list_all(self, _):
