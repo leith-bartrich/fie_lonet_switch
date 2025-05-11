@@ -1,0 +1,25 @@
+[project]
+name = "fie_lonet_switch"
+version = "0.1.0"
+description = "A toolset for managing local/network switch state for user tools and environment."
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+requires-python = ">=3.8"
+dependencies = [
+    "click>=8.0.0",
+    "textual>=0.40.0",
+    "PySide6>=6.0.0",
+    "pydantic>=2.0.0"
+]
+
+[project.scripts]
+fie_lonet_switch = "fie_lonet_switch.cli:main"
+fie_lonet_switch_tray = "fie_lonet_switch.tray:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["fie_lonet_switch*"]
