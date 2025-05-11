@@ -9,13 +9,13 @@ requires-python = ">=3.8"
 dependencies = [
     "click>=8.0.0",
     "textual>=0.40.0",
-    "PySide6>=6.0.0",
+    "rumps>=0.4.0",
     "pydantic>=2.0.0"
 ]
 
 [project.scripts]
 fie_lonet_switch = "fie_lonet_switch.cli:main"
-fie_lonet_switch_tray = "fie_lonet_switch.tray:main"
+fie_lonet_switch_tray = "fie_lonet_switch.tray_entry:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]
