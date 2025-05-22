@@ -8,6 +8,13 @@ from fie_lonet_switch.database import (
     JinjaTemplate,
 )
 
+
+def _resolve_group_alias(group: str) -> str:
+    """Translate CLI group aliases into their internal representations."""
+    if group.lower() == "all":
+        return "*"
+    return group
+
 @click.group()
 def main():
     """FIE LO/NET Switch CLI."""
@@ -18,14 +25,20 @@ def main():
 @click.argument('group', required=False, default='*')
 @click.argument('locale', required=False, default='')
 def switch(switch_to, group, locale):
-    """Switch the state to 'lo' or 'net'. Optionally specify group and locale."""
+    """Switch the state to 'lo' or 'net'. Optionally specify group and locale.
+    The group name ``all`` may be used as an alias for ``*``.
+    """
+    group = _resolve_group_alias(group)
     do_switch(switch_to, group, locale)
     click.echo(f"Switched to {switch_to} (group: {group}, locale: {locale})")
 
 @main.command()
 @click.argument('group', required=False, default='*')
 def status(group):
-    """Show the current switch state for a group (default: all)."""
+    """Show the current switch state for a group (default: all). The group name
+    ``all`` may be used as an alias for ``*``.
+    """
+    group = _resolve_group_alias(group)
     db = SwitchStateDB()
     state, locale = get_switch_state_transaction(db, group)
     db.close()
@@ -63,7 +76,10 @@ def list_all():
 @main.command()
 @click.argument('group')
 def clear_group(group):
-    """Delete all switch state changes for a given group."""
+    """Delete all switch state changes for a given group. The group name ``all``
+    may be used as an alias for ``*``.
+    """
+    group = _resolve_group_alias(group)
     db = SwitchStateDB()
     try:
         clear_group_transaction(db, group)
@@ -95,7 +111,10 @@ def list_jinjas():
 @click.argument("path")
 @click.argument("group", required=False, default="*")
 def add_jinja(path, group):
-    """Add a jinja template path."""
+    """Add a jinja template path. The group name ``all`` may be used as an
+    alias for ``*``.
+    """
+    group = _resolve_group_alias(group)
     db = SwitchStateDB()
     try:
         db.begin()

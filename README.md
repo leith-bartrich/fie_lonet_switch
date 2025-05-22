@@ -37,6 +37,11 @@ Replace `[OPTIONS]` and `[COMMAND]` with the appropriate options and commands fo
 fie_lonet_switch --help
 ```
 
+The optional `GROUP` argument used by several commands accepts `*` to target all
+groups. You may also use the alias `all` in place of `*`. Because `all` is
+interpreted as this alias, it is reserved and cannot be used as a custom group
+name.
+
 ### Example Usages
 
 - Switch to local state for all groups:
