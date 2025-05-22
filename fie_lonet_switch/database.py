@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any, Union, Tuple, Literal
 import uuid
 from datetime import datetime
@@ -12,6 +12,16 @@ class SwitchStateChange(BaseModel):
     mode: Literal["lo", "net"] = Field(..., description="Switch mode: 'lo' for local, 'net' for network.")
     group: str = Field(default="*", description="Group name for the switch event.")
     locale: str = Field(default="", description="Locale for the switch event.")
+
+class JinjaTemplate(BaseModel):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, description="Unique identifier for the template.")
+    path: str = Field(..., description="Path to .jinja template file")
+
+    @validator('path')
+    def _validate_path(cls, v: str) -> str:
+        if not v.endswith('.jinja'):
+            raise ValueError('path must end with .jinja')
+        return v
 
 class SwitchStateDB:
     def __init__(self, db_path: str = None):
@@ -32,6 +42,12 @@ class SwitchStateDB:
                 mode TEXT NOT NULL,
                 group_name TEXT NOT NULL,
                 locale TEXT NOT NULL
+            )
+        ''')
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS jinja_templates (
+                id TEXT PRIMARY KEY,
+                path TEXT NOT NULL UNIQUE
             )
         ''')
         self.conn.commit()
@@ -154,6 +170,60 @@ class SwitchStateDB:
     def clear_switch_state_changes(self) -> None:
         cur = self.conn.cursor()
         cur.execute('DELETE FROM switch_state_change')
+
+    # Jinja template CRUD methods
+    def create_jinja_template(self, template: 'JinjaTemplate') -> None:
+        cur = self.conn.cursor()
+        try:
+            cur.execute('''
+                INSERT INTO jinja_templates (id, path)
+                VALUES (?, ?)
+            ''', (
+                str(template.id),
+                template.path
+            ))
+        except sqlite3.IntegrityError as e:
+            raise ValueError(f"JinjaTemplate with id {template.id} or path {template.path} already exists.") from e
+
+    def get_jinja_template(self, id: str) -> 'JinjaTemplate':
+        cur = self.conn.cursor()
+        cur.execute('SELECT id, path FROM jinja_templates WHERE id = ?', (id,))
+        row = cur.fetchone()
+        if row:
+            return JinjaTemplate(id=row[0], path=row[1])
+        raise LookupError(f"JinjaTemplate with id {id} not found.")
+
+    def get_all_jinja_templates(self) -> List['JinjaTemplate']:
+        cur = self.conn.cursor()
+        cur.execute('SELECT id, path FROM jinja_templates')
+        rows = cur.fetchall()
+        return [JinjaTemplate(id=row[0], path=row[1]) for row in rows]
+
+    def update_jinja_template(self, template: 'JinjaTemplate') -> None:
+        cur = self.conn.cursor()
+        try:
+            cur.execute('''
+                UPDATE jinja_templates
+                SET path = ?
+                WHERE id = ?
+            ''', (
+                template.path,
+                str(template.id)
+            ))
+        except sqlite3.IntegrityError as e:
+            raise ValueError(
+                f"JinjaTemplate with path {template.path} already exists."
+            ) from e
+        if cur.rowcount == 0:
+            raise LookupError(
+                f"JinjaTemplate with id {template.id} not found for update."
+            )
+
+    def delete_jinja_template(self, id: str) -> None:
+        cur = self.conn.cursor()
+        cur.execute('DELETE FROM jinja_templates WHERE id = ?', (id,))
+        if cur.rowcount == 0:
+            raise LookupError(f"JinjaTemplate with id {id} not found for deletion.")
 
 def switch_change_transaction(db: SwitchStateDB, switch_to:Literal['lo', 'net'], group:str = "*", locale:str = "") -> None:
     """
