@@ -225,6 +225,20 @@ class SwitchStateDB:
         if cur.rowcount == 0:
             raise LookupError(f"JinjaTemplate with id {id} not found for deletion.")
 
+    def get_jinja_template_by_path(self, path: str) -> 'JinjaTemplate':
+        cur = self.conn.cursor()
+        cur.execute('SELECT id, path FROM jinja_templates WHERE path = ?', (path,))
+        row = cur.fetchone()
+        if row:
+            return JinjaTemplate(id=row[0], path=row[1])
+        raise LookupError(f"JinjaTemplate with path {path} not found.")
+
+    def delete_jinja_template_by_path(self, path: str) -> None:
+        cur = self.conn.cursor()
+        cur.execute('DELETE FROM jinja_templates WHERE path = ?', (path,))
+        if cur.rowcount == 0:
+            raise LookupError(f"JinjaTemplate with path {path} not found for deletion.")
+
 def switch_change_transaction(db: SwitchStateDB, switch_to:Literal['lo', 'net'], group:str = "*", locale:str = "") -> None:
     """
     Perform a switch change transaction.

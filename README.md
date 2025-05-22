@@ -87,6 +87,24 @@ fie_lonet_switch --help
   fie_lonet_switch clear_group mygroup
   ```
 
+- List all configured Jinja template paths:
+
+  ```sh
+  fie_lonet_switch jinjas list
+  ```
+
+- Add a Jinja template path:
+
+  ```sh
+  fie_lonet_switch jinjas add /path/to/template.jinja
+  ```
+
+- Delete a Jinja template path:
+
+  ```sh
+  fie_lonet_switch jinjas delete /path/to/template.jinja
+  ```
+
 ## Switch Scripts
 
 You can create switch scripts to automatic switcing of things based when you switch state.
