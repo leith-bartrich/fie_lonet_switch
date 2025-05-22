@@ -16,6 +16,7 @@ class SwitchStateChange(BaseModel):
 class JinjaTemplate(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, description="Unique identifier for the template.")
     path: str = Field(..., description="Path to .jinja template file")
+    group: str = Field(default="*", description="Group associated with this template.")
 
     @validator('path')
     def _validate_path(cls, v: str) -> str:
@@ -47,9 +48,14 @@ class SwitchStateDB:
         cur.execute('''
             CREATE TABLE IF NOT EXISTS jinja_templates (
                 id TEXT PRIMARY KEY,
-                path TEXT NOT NULL UNIQUE
+                path TEXT NOT NULL UNIQUE,
+                group_name TEXT NOT NULL DEFAULT '*'
             )
         ''')
+        cur.execute("PRAGMA table_info(jinja_templates)")
+        cols = [row[1] for row in cur.fetchall()]
+        if 'group_name' not in cols:
+            cur.execute('ALTER TABLE jinja_templates ADD COLUMN group_name TEXT NOT NULL DEFAULT "*"')
         self.conn.commit()
 
     def close(self):
@@ -176,38 +182,41 @@ class SwitchStateDB:
         cur = self.conn.cursor()
         try:
             cur.execute('''
-                INSERT INTO jinja_templates (id, path)
-                VALUES (?, ?)
+                INSERT INTO jinja_templates (id, path, group_name)
+                VALUES (?, ?, ?)
             ''', (
                 str(template.id),
-                template.path
+                template.path,
+                template.group
             ))
         except sqlite3.IntegrityError as e:
             raise ValueError(f"JinjaTemplate with id {template.id} or path {template.path} already exists.") from e
 
     def get_jinja_template(self, id: str) -> 'JinjaTemplate':
         cur = self.conn.cursor()
-        cur.execute('SELECT id, path FROM jinja_templates WHERE id = ?', (id,))
+        cur.execute('SELECT id, path, group_name FROM jinja_templates WHERE id = ?', (id,))
         row = cur.fetchone()
         if row:
-            return JinjaTemplate(id=row[0], path=row[1])
+            return JinjaTemplate(id=row[0], path=row[1], group=row[2])
         raise LookupError(f"JinjaTemplate with id {id} not found.")
 
     def get_all_jinja_templates(self) -> List['JinjaTemplate']:
         cur = self.conn.cursor()
-        cur.execute('SELECT id, path FROM jinja_templates')
+        cur.execute('SELECT id, path, group_name FROM jinja_templates')
         rows = cur.fetchall()
-        return [JinjaTemplate(id=row[0], path=row[1]) for row in rows]
+        return [JinjaTemplate(id=row[0], path=row[1], group=row[2]) for row in rows]
 
     def update_jinja_template(self, template: 'JinjaTemplate') -> None:
         cur = self.conn.cursor()
         try:
             cur.execute('''
                 UPDATE jinja_templates
-                SET path = ?
+                SET path = ?,
+                    group_name = ?
                 WHERE id = ?
             ''', (
                 template.path,
+                template.group,
                 str(template.id)
             ))
         except sqlite3.IntegrityError as e:
@@ -227,10 +236,10 @@ class SwitchStateDB:
 
     def get_jinja_template_by_path(self, path: str) -> 'JinjaTemplate':
         cur = self.conn.cursor()
-        cur.execute('SELECT id, path FROM jinja_templates WHERE path = ?', (path,))
+        cur.execute('SELECT id, path, group_name FROM jinja_templates WHERE path = ?', (path,))
         row = cur.fetchone()
         if row:
-            return JinjaTemplate(id=row[0], path=row[1])
+            return JinjaTemplate(id=row[0], path=row[1], group=row[2])
         raise LookupError(f"JinjaTemplate with path {path} not found.")
 
     def delete_jinja_template_by_path(self, path: str) -> None:

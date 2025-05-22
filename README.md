@@ -99,6 +99,12 @@ fie_lonet_switch --help
   fie_lonet_switch jinjas add /path/to/template.jinja
   ```
 
+  Add a template path for a specific group:
+
+  ```sh
+  fie_lonet_switch jinjas add /path/to/other_template.jinja mygroup
+  ```
+
 - Delete a Jinja template path:
 
   ```sh

@@ -86,27 +86,28 @@ def list_jinjas():
     try:
         templates = db.get_all_jinja_templates()
         for tmpl in templates:
-            click.echo(tmpl.path)
+            click.echo(f"{tmpl.path} {tmpl.group}")
     finally:
         db.close()
 
 
 @jinjas.command("add")
 @click.argument("path")
-def add_jinja(path):
+@click.argument("group", required=False, default="*")
+def add_jinja(path, group):
     """Add a jinja template path."""
     db = SwitchStateDB()
     try:
         db.begin()
         try:
-            # Check for existing path; ignore if present
-            db.get_jinja_template_by_path(path)
-            db.rollback()
+            existing = db.get_jinja_template_by_path(path)
+            existing.group = group
+            db.update_jinja_template(existing)
         except LookupError:
-            tmpl = JinjaTemplate(path=path)
+            tmpl = JinjaTemplate(path=path, group=group)
             db.create_jinja_template(tmpl)
-            db.commit()
-        click.echo(f"Added {path}")
+        db.commit()
+        click.echo(f"Added {path} with group {group}")
     except Exception as e:
         db.rollback()
         click.echo(f"Error adding template '{path}': {e}")
