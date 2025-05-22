@@ -132,6 +132,54 @@ def switch_change(switch_to:str, group:str = "*", locale:str = "") -> None:
 
 In this manner you can generally do whatever you want when the switch state changes.
 
+## Jinja Templates
+
+Jinja templates can be registered with the CLI so they are rendered every time
+the switch state changes.  Add a path to a `.jinja` file using:
+
+```sh
+fie_lonet_switch jinjas add /path/to/config.conf.jinja [group]
+```
+
+When a switch occurs the template is rendered to a file of the same name without
+the `.jinja` extension.  Each template receives a variable named
+`fie_lonet_switch` providing information about the current switch:
+
+```json
+{
+  "switch": {
+    "switch_to": "lo" | "net",
+    "group": "group name",
+    "locale": "locale name"
+  }
+}
+```
+
+### Switching sections based on lo/net
+
+```jinja
+{% if fie_lonet_switch.switch.switch_to == "lo" %}
+# using local resources
+USE_LOCAL_SERVICES=true
+{% else %}
+# using network resources
+USE_LOCAL_SERVICES=false
+{% endif %}
+```
+
+### Locale specific settings with fallback
+
+```jinja
+{% if fie_lonet_switch.switch.locale == "home" %}
+SERVER_IP=192.168.1.10  # LAN
+{% elif fie_lonet_switch.switch.locale == "global" %}
+SERVER_IP=203.0.113.10  # Public
+{% else %}
+SERVER_IP=203.0.113.10  # fallback when locale unspecified
+{% endif %}
+```
+
+
 ## Current Status
 
 The database and CLI work well enough to be useful.  The GUI is a work in progress.  The MacOS implementation is simple and seems functional.  But deployment via py2app is not really tested.  It might work?  If it does, it'll put a app bundle in the build subdirectory.  Which you can then drag to your applications folder.
